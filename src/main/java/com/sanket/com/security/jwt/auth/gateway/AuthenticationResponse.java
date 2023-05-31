@@ -1,4 +1,4 @@
-package com.sanket.com.security.jwt.auth;
+package com.sanket.com.security.jwt.auth.gateway;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

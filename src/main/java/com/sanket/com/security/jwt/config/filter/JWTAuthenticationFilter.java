@@ -1,5 +1,8 @@
-package com.sanket.com.security.jwt.config;
+package com.sanket.com.security.jwt.config.filter;
 
+import com.sanket.com.security.jwt.config.JwtService;
+import com.sanket.com.security.jwt.config.authentication.CustomAuthentication;
+import com.sanket.com.security.jwt.config.manager.CustomAuthenticationManager;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,6 +24,8 @@ import java.io.IOException;
 public class JWTAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
+    private final CustomAuthenticationManager authenticationManager;
+
     @Override
     protected void doFilterInternal(
             @NonNull HttpServletRequest request,
@@ -29,23 +34,25 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
 
         final String authHeader = request.getHeader("Authorization");
         final String jwtToken;
-        final String userEmail;
 
-        if(authHeader == null || !authHeader.startsWith("Bearer")){
+        if (authHeader == null || !authHeader.startsWith("Bearer")) {
             filterChain.doFilter(request, response);
             return;
         }
         jwtToken = authHeader.substring(7);
-        userEmail = jwtService.extractUsername(jwtToken);
-        if(userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null){
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
-            if(jwtService.isTokenValid(jwtToken, userDetails)){
-                UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userDetails,null, userDetails.getAuthorities());
-                authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-            }
+
+        UserDetails userDetails = userDetailsService.loadUserByUsername(jwtService.extractUsername(jwtToken));
+        CustomAuthentication ca = (CustomAuthentication) authenticationManager.authenticate(new CustomAuthentication(false, jwtToken, jwtService.extractUsername(jwtToken)));
+
+        if (ca.isAuthenticated()) {
+            UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+            authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+            filterChain.doFilter(request, response);
         }
-        filterChain.doFilter(request,response);
+
 
     }
+
 }
+

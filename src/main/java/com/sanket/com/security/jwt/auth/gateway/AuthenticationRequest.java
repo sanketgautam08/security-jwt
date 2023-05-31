@@ -1,4 +1,4 @@
-package com.sanket.com.security.jwt.auth;
+package com.sanket.com.security.jwt.auth.gateway;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,9 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class RegisterRequest {
-    private String firstName;
-    private String lasttName;
+public class AuthenticationRequest {
     private String email;
     private String password;
 
