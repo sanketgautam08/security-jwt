@@ -10,6 +10,6 @@ public class DemoController {
 
     @GetMapping("/hello")
     public ResponseEntity<String> sayHello(){
-            return ResponseEntity.ok("Congratulations, you have made it to the secured land!!");
+        return ResponseEntity.ok("Congratulations, you have made it to the secured land!!");
     }
 }

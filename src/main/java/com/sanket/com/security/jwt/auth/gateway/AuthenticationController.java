@@ -18,11 +18,12 @@ public class AuthenticationController {
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
-        AuthenticationResponse authenticationResponse = authenticationService.register(request);
-        if (authenticationResponse.token == null) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Username already exists!!");
+        String response = authenticationService.register(request);
+        if("Username Already Exists!!".equals(response)){
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+        }else{
+            return ResponseEntity.status(HttpStatus.OK).body("User Created:\n" + response);
         }
-        return ResponseEntity.ok(authenticationResponse);
     }
 
     @PostMapping("/authenticate")
@@ -30,7 +31,7 @@ public class AuthenticationController {
         try {
             AuthenticationResponse authenticationResponse = authenticationService.authenticate(request);
             if (authenticationResponse.token == null) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Invalid token/Credentials");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Invalid Creds!!");
             } else {
                 return ResponseEntity.ok(authenticationService.authenticate(request));
             }

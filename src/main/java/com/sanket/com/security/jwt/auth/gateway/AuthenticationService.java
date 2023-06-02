@@ -1,7 +1,6 @@
 package com.sanket.com.security.jwt.auth.gateway;
 
 import com.sanket.com.security.jwt.config.JwtService;
-import com.sanket.com.security.jwt.config.manager.CustomAuthenticationManager;
 import com.sanket.com.security.jwt.user.Role;
 import com.sanket.com.security.jwt.user.User;
 import com.sanket.com.security.jwt.user.UserRepository;
@@ -10,7 +9,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Collection;
+import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
@@ -20,8 +19,8 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
-    public AuthenticationResponse register(RegisterRequest request) {
-        if(repository.findByEmail(request.getEmail()).isEmpty()){
+    public String register(RegisterRequest request) {
+        if (repository.findByEmail(request.getEmail()).isEmpty()) {
             var user = User.builder()
                     .firstName(request.getFirstName())
                     .lastName(request.getLastName())
@@ -30,23 +29,26 @@ public class AuthenticationService {
                     .role(Role.USER)
                     .build();
             repository.save(user);
-            var jwtToken = jwtService.generateToken(user);
-            return AuthenticationResponse.builder()
-                    .token(jwtToken)
-                    .build();
-        }
-        else{
-            return new AuthenticationResponse(null);
+            return user.getEmail();
+        } else {
+            return "Username Already Exists!!";
         }
     }
 
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
-        if(SecurityContextHolder.getContext().getAuthentication().isAuthenticated()){
-            var user = repository.findByEmail(request.getEmail()).orElseThrow();
-            var jwtToken = jwtService.generateToken(user);
-            return AuthenticationResponse.builder()
-                    .token(jwtToken)
-                    .build();
+        if (SecurityContextHolder.getContext().getAuthentication().isAuthenticated()) {
+            User user;
+            try {
+                user = repository.findByEmail(request.getEmail()).orElseThrow();
+            } catch (NoSuchElementException e) {
+                return AuthenticationResponse.builder().token(null).build();
+            }
+            if (passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+                var jwtToken = jwtService.generateToken(user);
+                return AuthenticationResponse.builder()
+                        .token(jwtToken)
+                        .build();
+            }
         }
         return AuthenticationResponse.builder().token(null).build();
     }
